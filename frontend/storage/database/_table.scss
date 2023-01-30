@@ -1,0 +1,69 @@
+@use "../../_global";
+@use "../_bar";
+
+.db {
+  // W
+  width: calc(100% - #{bar.$sizeLandscape});
+  @media all and (max-width: 640px) {
+    width: calc(100% - #{bar.$sizePortrait});
+  }
+  overflow-x: auto;
+
+  // Grid
+  display: grid;
+
+  // Font
+  font-family: global.$fontStack;
+  text-align: left;
+}
+
+thead, tbody, tr {
+  display: contents;
+}
+
+th, td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+
+  &:first-child {
+    padding-left: 1rem;
+  }
+
+  &:last-child {
+    padding-right: 1rem;
+  }
+}
+
+th {
+  position: sticky;
+
+  color: global.$colorWhiteLight;
+  background-color: #000000;
+  padding: 1rem 1rem;
+
+  font-size: calc(0.5rem + 0.75vw);
+  @media all and (max-width: 640px) {
+    font-size: 1rem;
+  }
+}
+
+tr {
+  &:nth-child(even) td {
+    background-color: rgba(999, 999, 999, 0.025);
+  }
+
+  &:hover td {
+    background-color: rgba(999, 999, 999, 0.05);
+  }
+}
+
+td {
+  color: global.$colorWhiteMedium;
+  padding: 0.5rem 1rem;
+
+  font-size: calc(0.5rem + 0.75vw);
+  @media all and (max-width: 640px) {
+    font-size: 1rem;
+  }
+}

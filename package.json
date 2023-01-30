@@ -1,0 +1,23 @@
+{
+  "name": "conflux",
+  "description": "",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "browserify": ".frontend/browserify.sh profile storage",
+    "build": "npm run browserify"
+  },
+  "dependencies": {
+    "browserify": "^17.0.0",
+    "dragula": "^3.7.3",
+    "golue": "github:memori-dev/golue",
+    "jss": "^10.9.2",
+    "jss-plugin-global": "^10.9.2",
+    "jss-preset-default": "^10.9.2",
+    "lm": "github:memori-dev/lm",
+    "notyf": "^3.10.0"
+  }
+}
