@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2016",
+    "module": "ES2016",
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "watch": true,
+    "sourceMap": true,
+    "moduleResolution": "Node",
+    "lib": [
+      "dom",
+      "ES2016"
+    ]
+  }
+}

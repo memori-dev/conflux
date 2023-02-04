@@ -1,9 +1,9 @@
-const {profileAuthApiGroup, profileQueryApiGroup} = require("../../internal/handlers/profile/profile");
-const {theme, applyDefaults} = require("../theme");
-const {lm} = require("lm");
-const {AuthView} = require("./auth");
-const {ProfileView} = require("./profile");
-const {Notyf} = require("notyf");
+import {profileAuthApiGroup, profileQueryApiGroup} from "../../internal/handlers/profile/profile"
+import {theme, applyDefaults} from "../theme"
+import {lm} from "lm"
+import {AuthView} from "./auth"
+import {ProfileView} from "./profile"
+import {Notyf} from "notyf"
 
 const svgs = {
     createProfile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">

@@ -1,14 +1,13 @@
-const {Group} = require("golue");
+import {Group, method} from "golue"
 
 const storageGroup = new Group("storage")
 
 const fileGroup = storageGroup.newGroup("file")
-const fileApiGroup = {
-    create: fileGroup.POST({
+export const fileApiGroup = {
+    create: fileGroup.endpoint(method.POST, {
         path: "create",
-        validStatuses: [200],
         invalidStatuses: [500],
-        buildFetchArgs: function (file) {
+        buildRequestInit: function (file): RequestInit {
             debugger
             let formData = new FormData();
             formData.append("file", file);
@@ -27,28 +26,24 @@ const fileApiGroup = {
     }),
 
     // TODO filtering
-    read: fileGroup.GET_BODY({
+    read: fileGroup.endpoint(method.GET_BODY, {
         path: "read",
         invalidStatuses: [500],
-        buildFetchArgs: Group.buildFetchArgsJSON
+        buildRequestInit: Group.buildRequestInitJSON<{}>()
     }),
 }
 
 const filestoreGroup = storageGroup.newGroup("filestore")
-const filestoreApiGroup = {
-    // Payload: {Name}
-    create: filestoreGroup.POST({
+export const filestoreApiGroup = {
+    create: filestoreGroup.endpoint(method.POST, {
         path: "create",
         invalidStatuses: [500],
-        buildFetchArgs: Group.buildFetchArgsJSON
+        buildRequestInit: Group.buildRequestInitJSON<{
+            Name: string
+        }>()
     }),
-    read: filestoreGroup.GET({
+    read: filestoreGroup.endpoint(method.GET, {
         path: "read",
         invalidStatuses: [500],
     }),
-}
-
-module.exports = {
-    fileApiGroup,
-    filestoreApiGroup,
 }

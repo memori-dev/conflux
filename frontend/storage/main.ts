@@ -1,8 +1,8 @@
-const {DbController} = require("./database/controller");
-const NavController = require("./nav/controller")
-const {toolbar} = require("./toolbar");
-const {bar} = require("./bar");
-const {lm} = require("lm");
+import {DbController} from "./database/controller"
+import NavController from "./nav/controller"
+import {toolbar} from "./toolbar"
+import {bar} from "./bar"
+import {lm} from "lm"
 
 const svgs = {
     upload: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
