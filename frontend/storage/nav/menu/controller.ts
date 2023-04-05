@@ -1,10 +1,10 @@
-const MenuModel = require("./model")
-const MenuView = require("./view")
-const {lm} = require("lm");
+import {MenuModel} from "./model"
+import {MenuView} from "./view"
+import {lm} from "lm"
 
-class MenuController {
-    model
-    view
+export class MenuController {
+    model: MenuModel
+    view: MenuView
 
     constructor() {
         this.model = new MenuModel()
@@ -43,5 +43,3 @@ class MenuController {
         }.bind(this))
     }
 }
-
-module.exports = MenuController

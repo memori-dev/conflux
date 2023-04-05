@@ -1,10 +1,10 @@
-const {default: global} = require('jss-plugin-global')
-const {default: jss} = require('jss')
-const {lm} = require("lm");
+import {default as global} from "jss-plugin-global"
+import {default as jss} from "jss"
+import {lm} from "lm"
 
 jss.use(global())
 
-const theme = {
+export const theme = {
     styles: lm.createStyleSheet({
         font: {
             fontFamily: `'Montserrat SemiBold', Helvetica, sans-serif`,
@@ -40,7 +40,7 @@ const theme = {
     },
 }
 
-function applyDefaults() {
+export function applyDefaults() {
     jss.createStyleSheet({
         '@global': {
             "html, body": {
@@ -61,9 +61,4 @@ function applyDefaults() {
             }
         }
     }).attach()
-}
-
-module.exports = {
-    theme,
-    applyDefaults,
 }

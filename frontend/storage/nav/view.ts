@@ -1,6 +1,6 @@
-const {theme} = require("../../theme");
-const {bar} = require("../bar");
-const {lm} = require("lm");
+import {theme} from "../../theme"
+import {bar} from "../bar"
+import {lm} from "lm"
 
 const svgs = {
     // menu: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -70,12 +70,12 @@ const styles = lm.createStyleSheet({
     },
 })
 
-class NavView {
-    nav
-    menuNotch
-    databaseName
+export class NavView {
+    nav: HTMLElement
+    menuNotch: HTMLSpanElement
+    databaseName: HTMLParagraphElement
     // TODO databaseConfig
-    databaseConfigButton
+    databaseConfigButton: HTMLButtonElement
 
     constructor() {
         // Nav
@@ -93,5 +93,3 @@ class NavView {
         dbConfigSvg.style.height = "55%"
     }
 }
-
-module.exports = NavView

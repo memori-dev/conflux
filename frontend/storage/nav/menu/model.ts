@@ -1,7 +1,7 @@
-const {profileQueryApiGroup} = require("../../../../internal/handlers/profile/profile");
-const {filestoreApiGroup} = require("../../../../internal/handlers/storage/storage");
+import {profileQueryApiGroup} from "../../../../internal/handlers/profile/profile"
+import {filestoreApiGroup} from "../../../../internal/handlers/storage/storage"
 
-class MenuModel {
+export class MenuModel {
     profileData
 
     ownDatabases = []
@@ -33,5 +33,3 @@ class MenuModel {
         this.profileData = await res.json()
     }
 }
-
-module.exports = MenuModel

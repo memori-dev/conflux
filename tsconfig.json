@@ -8,6 +8,7 @@
     "noEmitOnError": true,
     "watch": true,
     "sourceMap": true,
+    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "Node",
     "lib": [
       "dom",

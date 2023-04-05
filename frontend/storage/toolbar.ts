@@ -1,5 +1,6 @@
-const {theme} = require("../theme");
-const {lm} = require("lm")
+import {theme} from "../theme"
+import {bar} from "./bar"
+import {lm} from "lm"
 
 const svgs = {
     pointer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -62,34 +63,30 @@ const styles = lm.createStyleSheet({
 })
 
 // TODO selector, pair w select all, download, upload, delete
-const tools = {
-    pointer: lm.newSvg(svgs.pointer),
+const tools = new Map<string, HTMLElement>([
+    ["pointer", lm.newSvg(svgs.pointer)],
 
     // TODO pencil svg
     // TODO unavailable if name is hidden
     // TODO pencil svg on hover over name
-    renamer: lm.newSvg(svgs.renamer),
+    ["renamer", lm.newSvg(svgs.renamer)],
 
     // Download (highlight when files are selected)
-    download: lm.newSvg(svgs.download),
+    ["download", lm.newSvg(svgs.download)],
 
     // Delete (hightlight when files are selected)
-    delete: lm.newSvg(svgs.delete),
+    ["delete", lm.newSvg(svgs.delete)],
 
-    refresh: lm.newSvg(svgs.refresh),
-}
+    ["refresh", lm.newSvg(svgs.refresh)],
+])
 
-const toolbar = (function () {
+export const toolbar = (function () {
     let toolbar = lm.new("div", styles.toolbar)
 
-    Object.keys(tools).forEach(function (key) {
-        toolbar[key] = tools[key]
-        toolbar.appendChild(tools[key])
+    tools.forEach(function (value) {
+        // toolbar[key] = tools[key]
+        toolbar.appendChild(value)
     })
 
     return toolbar
 })()
-
-module.exports = {
-    toolbar,
-}

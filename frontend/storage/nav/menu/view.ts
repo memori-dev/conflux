@@ -1,6 +1,6 @@
-const {theme} = require("../../../theme");
-const {bar} = require("../../bar");
-const {lm} = require("lm");
+import {theme} from "../../../theme"
+import {bar} from "../../bar"
+import {lm} from "lm"
 
 const svgs = {
     arrow: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -208,31 +208,52 @@ const styles = lm.createStyleSheet({
     },
 })
 
+// TODO what type is the id
+type CollapsibleId = number
+
 class Collapsible {
-    header
-    headerText
-    headerArrow
+    header: HTMLSpanElement
 
-    content
+    headerText: HTMLParagraphElement
+    headerArrow: SVGSVGElement
 
-    appendChild(id, name, onclick) {
-        return lm.appendNewAttrs(this.content, "span", {
+    content: HTMLDivElement
+
+    childNodes: Map<CollapsibleId, HTMLSpanElement>
+
+    // TODO decide what to do if the id already exists / maybe just create a new id and return it
+    appendChild(id: CollapsibleId, name: string, onclick: Function) {
+        const e = lm.appendNewAttrs(this.content, "span", {
             id: id,
             innerText: name,
             onclick: onclick,
         }, theme.styles.font)
+        this.childNodes.set(id, e)
+
+        return e
     }
 
-    removeChild(id) {
-        for (const child in this.content.childNodes) {
-            if (child.id !== id) continue
-
-            this.content.removeChild(child)
+    removeChild(id: CollapsibleId) {
+        const childNode = this.childNodes.get(id)
+        if (childNode === undefined) {
+            console.warn(`Attempted to remove child node with id ${id} that isn't stored in collapsible instance`)
             return
         }
+
+        for (const i in this.content.childNodes) {
+            if (this.content.childNodes[i] !== childNode) continue
+
+            this.content.removeChild(this.content.childNodes[i])
+            this.childNodes.delete(id)
+            return
+        }
+
+        console.warn(`Failed to find child node with id ${id} in the collapsible element`)
     }
 
-    constructor(parent, name) {
+    // TODO getChild(id: CollapsibleId)?
+
+    constructor(parent: HTMLElement, name: string) {
         this.header = lm.appendNew(parent, "span", styles.collapsibleHeader)
 
         this.headerText = lm.appendNewAttrs(this.header, "p", {innerText: name}, theme.styles.font)
@@ -241,27 +262,38 @@ class Collapsible {
         this.content = lm.appendNew(parent, "div", styles.collapsibleContent)
         this.content.style.height = "0px"
 
-        this.header.addEventListener("click", function () {
+        this.header.addEventListener("click", function (this: Collapsible) {
             this.content.style.height = this.content.clientHeight !== 0 ?
                 "0px" : this.content.scrollHeight + "px"
 
             this.headerArrow.classList.toggle(styles.rotate90)
         }.bind(this))
+
+        this.childNodes = new Map<CollapsibleId, HTMLSpanElement>()
     }
 }
 
-class MenuView {
-    div
+export class MenuView {
+    // Main
+    div: HTMLDivElement
 
-    header
-    profileDiv
-    profilePicture
-    profileName
-    hamburger
+    // Header
+    header: HTMLDivElement
+    profileDiv: HTMLDivElement
+    profilePicture: SVGSVGElement
+    profileName: HTMLHeadingElement
 
-    ownDatabases
-    sharedDatabases
-    sharedFiles
+    // Hamburger
+    hamburgerContainer: HTMLSpanElement
+    hamburger: SVGSVGElement
+
+    // Collapsible
+    ownDatabases: Collapsible
+    sharedDatabases: Collapsible
+    sharedFiles: Collapsible
+
+    // Create database
+    createDatabaseButton: HTMLButtonElement
 
     toggleHide() {
         this.div.classList.toggle(styles.menuHide)
@@ -280,13 +312,14 @@ class MenuView {
         this.profileName = lm.appendNew(this.profileDiv, "h3", theme.styles.font)
         this.profileName.innerText = "Name loading..."
 
+        // Hamburger
         this.hamburgerContainer = lm.appendNew(this.header, "span")
-        this.hamburger = lm.appendNewSvg(this.hamburgerContainer, svgs.hamburger)
-        this.hamburgerContainer.onclick = function () {
+        this.hamburgerContainer.onclick = function (this: MenuView) {
             this.toggleHide()
         }.bind(this)
+        this.hamburger = lm.appendNewSvg(this.hamburgerContainer, svgs.hamburger)
 
-        // Collapsibles
+        // Collapsible
         this.ownDatabases = new Collapsible(this.div, "Own databases")
         this.sharedDatabases = new Collapsible(this.div, "Shared databases")
         this.sharedFiles = new Collapsible(this.div, "Shared files")
@@ -295,5 +328,3 @@ class MenuView {
         this.createDatabaseButton = lm.appendNewAttrs(this.div, "button", {innerText: "Create database"}, styles.createDatabase, theme.styles.font)
     }
 }
-
-module.exports = MenuView

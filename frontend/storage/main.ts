@@ -77,7 +77,7 @@ const uploadSvg = lm.appendNewSvg(upload.label, svgs.upload)
 const togglerIsActiveClass = "togglerActive"
 const displayToggler = lm.appendNewSvg(toolbar, svgs.display)
 // TODO onclick outside of settingsdiv, untoggle
-displayToggler.onclick = function () {
+displayToggler.onclick = function (this: ) {
     // View
     const isVisible = this.view.mainContainer.style.visibility === "visible"
 

@@ -1,9 +1,9 @@
-const NavView = require("./view")
-const MenuController = require("./menu/controller")
+import {NavView} from "./view"
+import {MenuController} from "./menu/controller"
 
-class NavController {
+export class NavController {
     // TODO set name
-    view
+    view: NavView
 
     menuController
 
@@ -14,5 +14,3 @@ class NavController {
         this.menuController.view.toggleHide()
     }
 }
-
-module.exports = NavController
