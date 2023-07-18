@@ -70,7 +70,7 @@ func main() {
 	engine.StaticFile("/live.js", frontendBase+"/live.js")
 
 	// Profile
-	authenticator := profile.NewAuthenticator(cli, &auth.Authenticator{
+	authenticator := profile.NewAuthenticator(cli, &auth.Authenticator[profile.Auth]{
 		Public:        pubKey,
 		Private:       privKey,
 		EncryptionKey: &encKey,

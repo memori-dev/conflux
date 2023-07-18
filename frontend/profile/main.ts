@@ -1,9 +1,10 @@
+import {style} from '@vanilla-extract/css';
+import {Notyf} from "notyf"
+import {lm} from "@memori-dev/lm"
 import {profileAuthApiGroup, profileQueryApiGroup} from "../../internal/handlers/profile/profile"
-import {theme, applyDefaults} from "../theme"
-import {lm} from "lm"
 import {AuthView} from "./auth"
 import {ProfileView} from "./profile"
-import {Notyf} from "notyf"
+import {theme} from "../theme"
 
 const svgs = {
     createProfile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -13,8 +14,8 @@ const svgs = {
 </svg>`
 }
 
-let styles = lm.createStyleSheet({
-    main: {
+const styles = {
+    main: style({
         width: "100vw",
         minHeight: "100vh",
 
@@ -22,9 +23,8 @@ let styles = lm.createStyleSheet({
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-    },
-
-    welcome: {
+    }),
+    welcome: style({
         marginTop: "6rem",
         marginBottom: "6rem",
         fontSize: `calc(6rem + 1vmin)`,
@@ -32,24 +32,24 @@ let styles = lm.createStyleSheet({
         textAlign: "center",
         color: theme.color.white.medium,
         userSelect: "none",
-    },
+    }),
 
-    createProfileSpan: {
+    createProfileSpan: style({
         display: "flex",
         alignContent: "center",
         justifyContent: "center",
-    },
+    }),
 
-    createProfileImg: {
+    createProfileImg: style({
         width: "75%",
         aspectRatio: 1,
         color: "#dddddd",
-    },
+    }),
 
-    paddingBottom: {
+    paddingBottom: style({
         height: "8rem",
-    }
-})
+    })
+}
 
 const notyf = new Notyf({
     position: {x: "right", y: "top"},
@@ -57,11 +57,10 @@ const notyf = new Notyf({
 });
 
 // Main
-applyDefaults()
 const main = lm.appendNew(document.body, "main", styles.main)
 
 // Welcome
-lm.appendNewAttrs(main, "h1", {innerText: "Welcome"}, styles.welcome, theme.styles.font)
+lm.appendNewAttrs(main, "h1", {innerText: "Welcome"}, styles.welcome, theme.font.fontFamily)
 
 // Auth
 const authView = new AuthView()
@@ -72,9 +71,11 @@ const profilesView = new ProfileView()
 lm.append(main, profilesView.container);
 
 // Create profile
-const createProfileImgSpan = lm.new("div", styles.createProfileSpan)
-lm.appendNewSvg(createProfileImgSpan, svgs.createProfile, styles.createProfileImg)
-const createProfile = profilesView.addProfile("Create Profile", createProfileImgSpan)
+// TODO
+const createProfileContainer = new lm("div", styles.createProfileSpan)
+// const createProfileSvg = lm.appendNewSvg(createProfileContainer, svgs.createProfile, styles.createProfileImg)
+lm.appendNewSvg(createProfileContainer, svgs.createProfile, styles.createProfileImg)
+const createProfile = profilesView.addProfile("Create Profile", createProfileContainer)
 createProfile.addEventListener("click", function () {
     authView.render(true, "")
 })
@@ -82,18 +83,18 @@ createProfile.addEventListener("click", function () {
 // Padding bottom
 lm.appendNew(main, "span", styles.paddingBottom)
 
-async function loginNoPass(Name) {
+async function loginNoPass(name: string) {
     // Login
-    let res = await profileAuthApiGroup.login({Name})
-    if (res.err !== void 0) {
-        notyf.error(res.statusText)
+    let res = await profileAuthApiGroup.login({Name: name})
+    if (res.error) {
+        notyf.error(res.response?.statusText ?? "login failed")
         return
     }
 
     // Validate
-    res = await profileAuthApiGroup.validate({Name})
-    if (res.err !== void 0) {
-        notyf.error(res.statusText)
+    res = await profileAuthApiGroup.validate({Name: name})
+    if (res.error) {
+        notyf.error(res.response?.statusText ?? "validation failed")
         return
     }
 
@@ -104,7 +105,7 @@ async function loadProfileData() {
     let res
     for (let i = 0; i < 5; i++) {
         res = await profileQueryApiGroup.profiles({})
-        if (res.err === void 0) break
+        if (!res.error) break
 
         notyf.error("Failed to load profiles! Retrying...")
         await new Promise(function (r) {
@@ -115,29 +116,35 @@ async function loadProfileData() {
     // Throw if the profiles were not loaded
     if (!res) throw new Error("Failed to load profiles! Please retry later.")
 
-    return await res.json()
+    return await res.response?.json()
 }
 
-function addProfile({Name, ImageB64, PasswordEnabled}) {
-    const img = lm.newAttrs("img", {src: "data:image/png;base64," + atob(ImageB64)})
+interface Profile {
+    name: string
+    imageb64: string
+    passwordEnabled: boolean
+}
 
-    const profile = profilesView.addProfile(Name, img)
-    profile.addEventListener("click", async function () {
+function addProfile(profile: Profile) {
+    const img = lm.newAttrs("img", {src: "data:image/png;base64," + atob(profile.imageb64)})
+
+    const profileDiv = profilesView.addProfile(profile.name, img)
+    profileDiv.addEventListener("click", async function () {
         // Auto redirect if already logged in
-        const validateRes = await profileAuthApiGroup.validate({Name})
-        if (validateRes.err === void 0) {
+        const validateRes = await profileAuthApiGroup.validate(profile.name)
+        if (!validateRes.error) {
             window.location.href = "/storage"
             return
         }
 
         // Log in if there is no password
-        if (PasswordEnabled === false) {
-            await loginNoPass(Name)
+        if (!profile.passwordEnabled) {
+            await loginNoPass(profile.name)
             return
         }
 
         // Render
-        authView.render(false, Name)
+        authView.render(false, profile.name)
     })
 }
 
@@ -146,37 +153,37 @@ function addProfile({Name, ImageB64, PasswordEnabled}) {
     try {
         // TODO add each w a delay and fade in? or is this too much animation
         (await loadProfileData()).forEach(addProfile)
-    } catch (e) {
+    } catch (e: any) {
         notyf.error(e.message)
     }
 })()
 
 function validateInputs() {
     // Validate name
-    if (!authView.inputs.name.input.value) {
+    if (!authView.nameInput.input.value) {
         throw new Error("Username is not set")
     }
 
     // Validate password
     //.. signup && passwordEnabled
     //.. Login / !signup
-    if (!authView.signupSelected || (authView.signupSelected && authView.passwordEnabled.input.checked)) {
-        if (!authView.inputs.password.input.value) throw new Error("Password is not set")
+    if (!authView.signupSelected || (authView.signupSelected && authView.passwordEnabled.isChecked())) {
+        if (!authView.passwordInput.input.value) throw new Error("Password is not set")
     }
 
     // Validate confirmPassword
     //.. signup && passwordEnabled
-    if (authView.signupSelected && authView.passwordEnabled.input.checked) {
-        if (authView.inputs.password.input.value !== authView.inputs.confirmPassword.input.value) {
+    if (authView.signupSelected && authView.passwordEnabled.isChecked()) {
+        if (authView.passwordInput.input.value !== authView.confirmPasswordInput.input.value) {
             throw new Error("Passwords do not match")
         }
     }
 }
 
 async function postFormData() {
-    const Name = authView.inputs.name.input.value
-    const Password = authView.inputs.password.input.value
-    const PasswordEnabled = authView.passwordEnabled.input.checked
+    const Name = authView.nameInput.input.value
+    const Password = authView.passwordInput.input.value
+    const PasswordEnabled = authView.passwordEnabled.isChecked()
 
     // Post data
     const res = authView.signupSelected ?
@@ -184,12 +191,12 @@ async function postFormData() {
         : await profileAuthApiGroup.login({Name, Password})
 
     // Validate
-    if (res.err !== void 0) throw new Error(res.statusText)
+    if (res.error) throw new Error(res.response?.statusText ?? `failed ${authView.signupSelected ? "signup" : "login"}`)
 }
 
 async function validateCookie() {
-    const res = await profileAuthApiGroup.validate({Name: authView.inputs.name.input.value})
-    if (res.err !== void 0) throw new Error("Login was completed, but the cookie was not valid")
+    const res = await profileAuthApiGroup.validate({Name: authView.nameInput.input.value})
+    if (res.error) throw new Error("Login was completed, but the cookie was not valid")
 }
 
 authView.submit.onclick = async function () {
@@ -200,7 +207,7 @@ authView.submit.onclick = async function () {
         validateInputs()
         await postFormData()
         await validateCookie()
-    } catch (e) {
+    } catch (e: any) {
         notyf.error(e.message)
         return
     }

@@ -1,15 +1,9 @@
-import {default as global} from "jss-plugin-global"
-import {default as jss} from "jss"
-import {lm} from "lm"
+import {createTheme, globalStyle} from '@vanilla-extract/css';
 
-jss.use(global())
-
-export const theme = {
-    styles: lm.createStyleSheet({
-        font: {
-            fontFamily: `'Montserrat SemiBold', Helvetica, sans-serif`,
-        },
-    }),
+export const [_, theme] = createTheme({
+    font: {
+        fontFamily: `'Montserrat SemiBold', Helvetica, sans-serif`,
+    },
 
     color: {
         dark: {
@@ -38,27 +32,22 @@ export const theme = {
             dark: "#3F3F3F",
         }
     },
-}
+})
 
-export function applyDefaults() {
-    jss.createStyleSheet({
-        '@global': {
-            "html, body": {
-                // Full page
-                width: "100vw",
-                minHeight: "100vh",
-                margin: 0,
+globalStyle("html, body", {
+    // Full page
+    width: "100vw",
+    minHeight: "100vh",
+    margin: 0,
 
-                backgroundColor: theme.color.dark.primary,
+    backgroundColor: theme.color.dark.primary,
 
-                // Hide overflow
-                msOverflowStyle: "none", // Internet Explorer 10+
-                scrollbarWidth: "none", // Firefox
-                overscrollBehaviorY: "none",
-            },
-            "html::-webkit-scrollbar, body::-webkit-scrollbar": {
-                display: "none", // Safari and Chrome
-            }
-        }
-    }).attach()
-}
+    // Hide overflow
+    msOverflowStyle: "none", // Internet Explorer 10+
+    scrollbarWidth: "none", // Firefox
+    overscrollBehaviorY: "none",
+})
+
+globalStyle("html::-webkit-scrollbar, body::-webkit-scrollbar", {
+    display: "none", // Safari and Chrome
+})

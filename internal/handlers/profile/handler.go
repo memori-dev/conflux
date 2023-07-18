@@ -3,7 +3,6 @@ package profile
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/memori-dev/auth"
-	"github.com/memori-dev/golue"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
@@ -25,7 +24,7 @@ func GetProfileId(ctx *gin.Context) string {
 
 type Authenticator struct {
 	db   *database
-	auth *auth.Authenticator
+	auth *auth.Authenticator[Auth]
 }
 
 func (this *Authenticator) authenticate(ctx *gin.Context, name, password string) error {
@@ -41,7 +40,7 @@ func (this *Authenticator) authenticate(ctx *gin.Context, name, password string)
 	}
 
 	// Authenticate profile
-	token, err := this.auth.Generate(&Auth{ProfileId: p.Id})
+	token, err := this.auth.GenerateStr(&Auth{ProfileId: p.Id})
 	if err != nil {
 		return err
 	}
@@ -67,8 +66,8 @@ func (this *Authenticator) ParseAuthentication(ctx *gin.Context) (*Auth, bool) {
 	}
 
 	// Parse id from cookie
-	a := new(Auth)
-	if err := this.auth.Parse([]byte(hdr), a, cookieMaxAge); err != nil {
+	a, err := this.auth.Decode([]byte(hdr), cookieMaxAge)
+	if err != nil {
 		expireCookie(ctx)
 		ctx.String(http.StatusUnauthorized, "invalid cookie")
 		return nil, false
@@ -77,7 +76,7 @@ func (this *Authenticator) ParseAuthentication(ctx *gin.Context) (*Auth, bool) {
 	return a, true
 }
 
-func NewAuthenticator(cli *mongo.Client, auth *auth.Authenticator, e *gin.Engine) *Authenticator {
+func NewAuthenticator(cli *mongo.Client, auth *auth.Authenticator[Auth], e *gin.Engine) *Authenticator {
 	a := &Authenticator{
 		db: &database{
 			coll: cli.Database("conflux").Collection("profile"),
@@ -94,8 +93,8 @@ func NewAuthenticator(cli *mongo.Client, auth *auth.Authenticator, e *gin.Engine
 
 	// Query
 	group.Handle(http.MethodGet, "self", a.self)
-	group.Handle(api.GetBody, "profile", a.profile)
-	group.Handle(api.GetBody, "profiles", a.profiles)
+	group.Handle(api.Query, "profile", a.profile)
+	group.Handle(api.Query, "profiles", a.profiles)
 
 	return a
 }

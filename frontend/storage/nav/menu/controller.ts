@@ -10,7 +10,7 @@ export class MenuController {
         this.model = new MenuModel()
         this.view = new MenuView()
 
-        this.view.createDatabaseButton.onclick = async function () {
+        this.view.createDatabaseButton.onclick = async function (this: MenuController) {
             const db = await this.model.databaseCreate()
             this.view.ownDatabases.appendChild(
                 db.Id,
@@ -22,7 +22,7 @@ export class MenuController {
             )
         }.bind(this)
 
-        this.model.profileRead().then(function () {
+        this.model.profileRead().then(function (this: MenuController) {
             this.view.profileName.innerText = this.model.profileData.Name
 
             const profilePicture = lm.new("img")
@@ -30,7 +30,7 @@ export class MenuController {
             this.view.profilePicture.replaceWith(profilePicture)
         }.bind(this))
 
-        this.model.databaseRead().then(function () {
+        this.model.databaseRead().then(function (this: MenuController) {
             for (let i = 0; i < this.model.ownDatabases.length; i++) {
                 this.view.ownDatabases.appendChild(
                     this.model.ownDatabases[i].Id,
