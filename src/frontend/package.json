@@ -1,0 +1,18 @@
+{
+	"dependencies": {
+		"@memori-dev/lm": "https://github.com/memori-dev/lm",
+		"jss": "^10.10.0",
+		"jss-preset-default": "^10.10.0"
+	},
+	"name": "conflux",
+	"version": "1.0.0",
+	"main": "index.js",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"private": true,
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}

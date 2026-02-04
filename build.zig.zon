@@ -1,0 +1,29 @@
+.{
+    .name = .conflux,
+    .version = "0.0.0",
+    .fingerprint = 0xab841383f212038a, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .auth = .{
+            .url = "git+https://github.com/memori-dev/auth.git#9093dfe37663831d719eef909d017772c39f2abe",
+            .hash = "auth-0.0.0-c77vhEQWAADqQCQYUnhdBAF9F1UWvpAg_zJ50Io6pgVf",
+        },
+        .sqlite = .{
+            .url = "git+https://github.com/vrischmann/zig-sqlite#0b75ba276d34de3141ec1697e3ef7c836d7b38e7",
+            .hash = "sqlite-3.48.0-F2R_a8eODgD9X8XjvWlZ1K7C-tDuHae4FuShM2N-yIT2",
+        },
+        .zap = .{
+            .url = "https://github.com/zigzap/zap/archive/zig-master.tar.gz",
+            .hash = "zap-0.10.6-GoeB8waKJAAbeCexLZVXgDRu9hitxf0EDqe4_yXdHoDl",
+        },
+        .json = .{
+            .url = "git+https://github.com/memori-dev/json.git#8a36a236fe7b51ef95716d097724fff812488f44",
+            .hash = "json-0.0.0-2U4_qU40AQBfdoPgG_dhEP6b_9Cylj5TnyD1ivcxyqky",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

@@ -1,0 +1,7 @@
+.zig-cache
+zig-out
+
+conflux
+src/frontend/bundle
+
+node_modules
