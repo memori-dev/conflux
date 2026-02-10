@@ -2,10 +2,10 @@ const std    = @import("std");
 const json   = @import("json");
 const zap    = @import("zap");
 const sqlite = @import("sqlite");
-const users  = @import("./model.zig");
-const auth   = @import("../auth.zig");
-const config = @import("../config.zig");
-const util   = @import("../util.zig");
+const model          = @import("./model.zig");
+const Authentication = @import("../auth.zig");
+const config         = @import("../config.zig");
+const util           = @import("../util.zig");
 
 pub const NamePass = struct {
 	const Self = @This();
@@ -28,8 +28,8 @@ pub const Signup = struct {
 
 	alloc:       std.mem.Allocator,
 	io:          std.Io,
-	usersTable: *users.Table,
-	auth:        auth.Authentication,
+	usersTable: *model.Table,
+	auth:        Authentication,
 
 	pub fn post(self: *Self, req: zap.Request) !void {
 		// parse body
@@ -83,8 +83,8 @@ pub const Login = struct {
 
 	alloc:       std.mem.Allocator,
 	io:          std.Io,
-	usersTable: *users.Table,
-	auth:        auth.Authentication,
+	usersTable: *model.Table,
+	auth:        Authentication,
 
 	pub fn post(self: *Self, req: zap.Request) !void {
 		// parse body
@@ -119,7 +119,7 @@ pub const Login = struct {
 		defer alloc.free(body);
 
 		var req = try cli.request(.POST, std.Uri.parse(config.baseUrl ++ Self.Path) catch unreachable, .{
-			.headers = .{.accept_encoding = .{.override = "gzip, deflate, br, zstd"}},
+			.headers = .{.accept_encoding = .{.override = "br"}},
 			.extra_headers = &.{.{.name = "Content-Type", .value = "application/json"}},
 		});
 		defer req.deinit();
@@ -141,7 +141,7 @@ pub const Users = struct {
 
 	alloc:       std.mem.Allocator,
 	io:          std.Io,
-	usersTable: *users.Table,
+	usersTable: *model.Table,
 
 	fn deinitNames(alloc: std.mem.Allocator, names: [][]const u8) void {
 		for (names) |v| alloc.free(v);
@@ -169,11 +169,10 @@ test {
 	var setup = util.TestingSetup.init(alloc, io, false);
 	defer setup.deinit();
 
-	var usersTable = users.Table.init(&setup.db);
-	const keyPair = auth.testingKeyPair() catch unreachable;
+	var usersTable = model.Table.init(&setup.db);
 
-	var signup = Signup {.alloc = alloc, .io = io, .usersTable = &usersTable, .keyPair = keyPair};
-	var login  = Login  {.alloc = alloc, .io = io, .usersTable = &usersTable, .keyPair = keyPair};
+	var signup = Signup {.alloc = alloc, .io = io, .usersTable = &usersTable, .auth = setup.auth};
+	var login  = Login  {.alloc = alloc, .io = io, .usersTable = &usersTable, .auth = setup.auth};
 	try setup.listener.register(&signup);
 	try setup.listener.register(&login);
 

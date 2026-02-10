@@ -5,13 +5,15 @@ const util  = @import("../util.zig");
 const users = @import("../users/model.zig");
 
 pub const tableName = "fileStore";
+pub const maxNameLen = 256;
 
 const createTable = "create table if not exists " ++ tableName ++ " (" ++ \\
 	\\    id     INTEGER  NOT NULL PRIMARY KEY,
 	\\    owner  INTEGER  NOT NULL,
 	\\    name   TEXT     NOT NULL,
 	\\    ts     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-	// TODO max name len
+	// TODO test
+	\\    CHECK(LENGTH(name) <= 256)
 	\\)
 ;
 

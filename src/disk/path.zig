@@ -60,11 +60,8 @@ pub fn filePath(up: uPath) [filePathLen]u8 {
 }
 
 test "path" {
-	// TODO test all w parallelization
-	var i: u16 = 0;
-	while (true) {
-		try std.testing.expectEqual(i, strTou16(fileChars, u16ToStr(fileChars, i)));
-		if (i == std.math.maxInt(u16)) break;
-		i += 32;
+	for (0..std.math.maxInt(u16)) |i| {
+		const iu16: u16 = @intCast(i);
+		try std.testing.expectEqual(iu16, strTou16(fileChars, u16ToStr(fileChars, iu16)));
 	}
 }

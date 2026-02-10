@@ -1,8 +1,8 @@
 const std    = @import("std");
 const sqlite = @import("sqlite");
 const zap    = @import("zap");
-const auth   = @import("auth");
-const config = @import("./config.zig");
+const Authentication = @import("./auth.zig");
+const config         = @import("./config.zig");
 
 //
 // REQUESTS
@@ -195,6 +195,11 @@ pub const TestingSetup = struct {
 	db:       sqlite.Db,
 	listener: zap.Endpoint.Listener,
 	cli:      std.http.Client,
+	auth:     Authentication = .{
+		.authenticator = .{.keyPair = @import("auth").testingKeyPair},
+		.cookieName = "id",
+		.ttl = 60*60*24*90,
+	},
 
 	pub fn init(alloc: std.mem.Allocator, io: std.Io, log: bool) Self {
 		return .{

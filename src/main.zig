@@ -2,22 +2,28 @@ const std    = @import("std");
 const sqlite = @import("sqlite");
 const zap    = @import("zap");
 
-const auth = @import("./auth.zig");
+const Authentication = @import("./auth.zig");
 const config = @import("./config.zig");
+
 const path = @import("./disk/path.zig");
 const Disk = @import("./disk/disk.zig").Disk;
-const filePerms = @import("./filePerms/model.zig");
-const filesHandlers = @import("./files/handlers.zig");
-const files = @import("./files/model.zig");
-const fileSegments = @import("./fileSegments/model.zig");
 
-const FileStoreTable    = @import("./fileStore/model.zig").Table;
-const fileStoreHandlers = @import("./fileStore/handlers.zig");
+const FilePermsTable = @import("./filePerms/model.zig").Table;
 
-const users = @import("./users/model.zig");
-const homeHandlers = @import("./home/handlers.zig");
+const FilesTable = @import("./files/model.zig").Table;
+const FilesHandler = @import("./files/handler.zig");
+
+const FileSegmentsTable = @import("./fileSegments/model.zig").Table;
+const FileSegmentsHandler = @import("./fileSegments/handler.zig");
+
+const FileStoreTable = @import("./fileStore/model.zig").Table;
+const FileStoreHandler = @import("./fileStore/handler.zig");
+
+const UsersTable = @import("./users/model.zig").Table;
 const usersHandlers = @import("./users/handlers.zig");
-const welcomeHandlers = @import("./welcome/handlers.zig");
+
+const HomeHandler = @import("./home/handler.zig");
+const WelcomeHandler = @import("./welcome/handler.zig");
 
 // TODO http header for error sets to allow for exhaustive testing/handling
 
@@ -51,6 +57,11 @@ pub fn main() !void {
 		.open_flags = .{.write = true, .create = true},
 		.threading_mode = .MultiThread,
 	});
+	var filesTable        = FilesTable.init(&db);
+	var fileSegmentsTable = FileSegmentsTable.init(&db);
+	var fileStoreTable    = FileStoreTable.init(&db);
+	var usersTable        = UsersTable.init(&db);
+	//_ = filePerms.Table.init(&db);
 
 	// server
 	var listener = zap.Endpoint.Listener.init(
@@ -66,46 +77,40 @@ pub fn main() !void {
 	);
 	defer listener.deinit();
 
-	// objs/data
-	var filesTable = files.Table.init(&db);
-	var fileSegmentsTable = fileSegments.Table.init(&db);
-	var fileStoreTable = FileStoreTable.init(&db);
-	var usersTable = users.Table.init(&db);
-	_ = filePerms.Table.init(&db);
+	// disk
 	const disk = Disk.init(io);
-	const authentication = auth.Authentication {
-		.authenticator = auth.Authenticator{.keyPair = @import("auth").testingKeyPair},
+
+	// auth
+	const authentication = Authentication {
+		.authenticator = .{.keyPair = @import("auth").testingKeyPair},
 		.cookieName = "id",
 		.ttl = 60*60*24*90,
 	};
 
-	// endpoints
-	var filesInit = filesHandlers.Init {.alloc = alloc, .io = io, .disk = disk, .db = &db, .filesTable = &filesTable, .fileSegmentsTable = &fileSegmentsTable};
-	try listener.register(&filesInit);
+	// handlers
+	var filesHandler = FilesHandler {.alloc = alloc, .io = io, .disk = disk, .db = &db, .filesTable = &filesTable, .fileSegmentsTable = &fileSegmentsTable};
+	try listener.register(&filesHandler);
 
-	var filesProgress = filesHandlers.Progress {.alloc = alloc, .fileSegmentsTable = &fileSegmentsTable};
-	try listener.register(&filesProgress);
+	var fileSegmentsHandler = FileSegmentsHandler {.alloc = alloc, .io = io, .disk = disk, .filesTable = &filesTable, .fileSegmentsTable = &fileSegmentsTable};
+	try listener.register(&fileSegmentsHandler);
 
-	var filesSegment = filesHandlers.Segment {.alloc = alloc, .io = io, .disk = disk, .filesTable = &filesTable, .fileSegmentsTable = &fileSegmentsTable};
-	try listener.register(&filesSegment);
+	var fileStoreHandler = FileStoreHandler {.alloc = alloc, .io = io, .fileStoreTable = &fileStoreTable, .auth = authentication};
+	try listener.register(&fileStoreHandler);
 
-	var fileStore = fileStoreHandlers.FileStore {.alloc = alloc, .io = io, .fileStoreTable = &fileStoreTable, .auth = authentication};
-	try listener.register(&fileStore);
+	var signupHandler = usersHandlers.Signup {.alloc = alloc, .io = io, .usersTable = &usersTable, .auth = authentication};
+	try listener.register(&signupHandler);
 
-	var signup = usersHandlers.Signup {.alloc = alloc, .io = io, .usersTable = &usersTable, .auth = authentication};
-	try listener.register(&signup);
-
-	var login = usersHandlers.Login {.alloc = alloc, .io = io, .usersTable = &usersTable, .auth = authentication};
-	try listener.register(&login);
+	var loginHandler = usersHandlers.Login {.alloc = alloc, .io = io, .usersTable = &usersTable, .auth = authentication};
+	try listener.register(&loginHandler);
 
 	var usersHandler = usersHandlers.Users {.alloc = alloc, .io = io, .usersTable = &usersTable};
 	try listener.register(&usersHandler);
 
-	var home = homeHandlers.Home {.alloc = alloc, .io = io, .auth = authentication};
-	try listener.register(&home);
+	var homeHandler = HomeHandler {.alloc = alloc, .io = io, .auth = authentication};
+	try listener.register(&homeHandler);
 
-	var welcome = welcomeHandlers.Welcome {.alloc = alloc, .io = io, .auth = authentication};
-	try listener.register(&welcome);
+	var welcomeHandler = WelcomeHandler {.alloc = alloc, .io = io, .auth = authentication};
+	try listener.register(&welcomeHandler);
 
 	// run server
 	try listener.listen();
