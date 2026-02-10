@@ -2,6 +2,6 @@
 zig-out
 
 conflux
-src/frontend/bundle
+src/frontend/dist/bundle
 
 node_modules

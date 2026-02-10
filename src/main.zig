@@ -10,10 +10,16 @@ const filePerms = @import("./filePerms/model.zig");
 const filesHandlers = @import("./files/handlers.zig");
 const files = @import("./files/model.zig");
 const fileSegments = @import("./fileSegments/model.zig");
+
+const FileStoreTable    = @import("./fileStore/model.zig").Table;
+const fileStoreHandlers = @import("./fileStore/handlers.zig");
+
 const users = @import("./users/model.zig");
 const homeHandlers = @import("./home/handlers.zig");
 const usersHandlers = @import("./users/handlers.zig");
 const welcomeHandlers = @import("./welcome/handlers.zig");
+
+// TODO http header for error sets to allow for exhaustive testing/handling
 
 test {
 	std.testing.refAllDecls(@This());
@@ -55,7 +61,7 @@ pub fn main() !void {
 			.on_request = fallback,
 			.on_error = onErr,
 			.log = true,
-			.public_folder = "src/frontend", // TODO fix
+			.public_folder = "src/frontend/dist",
 		},
 	);
 	defer listener.deinit();
@@ -63,6 +69,7 @@ pub fn main() !void {
 	// objs/data
 	var filesTable = files.Table.init(&db);
 	var fileSegmentsTable = fileSegments.Table.init(&db);
+	var fileStoreTable = FileStoreTable.init(&db);
 	var usersTable = users.Table.init(&db);
 	_ = filePerms.Table.init(&db);
 	const disk = Disk.init(io);
@@ -81,6 +88,9 @@ pub fn main() !void {
 
 	var filesSegment = filesHandlers.Segment {.alloc = alloc, .io = io, .disk = disk, .filesTable = &filesTable, .fileSegmentsTable = &fileSegmentsTable};
 	try listener.register(&filesSegment);
+
+	var fileStore = fileStoreHandlers.FileStore {.alloc = alloc, .io = io, .fileStoreTable = &fileStoreTable, .auth = authentication};
+	try listener.register(&fileStore);
 
 	var signup = usersHandlers.Signup {.alloc = alloc, .io = io, .usersTable = &usersTable, .auth = authentication};
 	try listener.register(&signup);

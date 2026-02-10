@@ -90,6 +90,21 @@ pub fn latestId(comptime T: type, db: *sqlite.Db, comptime tableName: []const u8
 // HANDLERS
 //
 
+pub fn htmlTemplate(comptime jsFileName: []const u8) []const u8 {
+	return \\ <!DOCTYPE html>
+	\\ <html lang="en">
+	\\ <head>
+	\\ <meta charset="UTF-8">
+	\\ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	\\ <title>conflux</title>
+	\\ </head>
+	\\ <body style="background: #0a0a0a; margin: 0">
+		++ "<script type=\"module\" src=\"bundle/" ++ jsFileName ++ ".js\"></script>" ++
+	\\ </body>
+	\\ </html>
+	;
+}
+
 pub fn sendBody(req: zap.Request, status: zap.http.StatusCode, body: []const u8) !void {
 	req.setStatus(status);
 	return req.sendBody(body);

@@ -6,9 +6,9 @@ dump sqlite table
 
 ### frontend
 build
-`bun build src/frontend/js/{}/{}.js --outdir src/frontend/bundle`
+`bun build src/frontend/js/{}/{}.js --outdir src/frontend/dist/bundle`
 monitor rebuild
-`while inotifywait -e modify -r src/frontend/js/{}; do bun build src/frontend/js/{}/{}.js --outdir src/frontend/bundle; done`
+`while inotifywait -e modify -r src/frontend/js/{}; do bun build src/frontend/js/{}/{}.js --outdir src/frontend/dist/bundle; done`
 
 ### notes
 temp fixes were made for `zig-sqlite` and `zap` to work with 0.16

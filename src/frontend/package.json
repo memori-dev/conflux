@@ -1,6 +1,6 @@
 {
 	"dependencies": {
-		"@memori-dev/lm": "https://github.com/memori-dev/lm",
+		"@memori-dev/lm": "file:../../../lm",
 		"jss": "^10.10.0",
 		"jss-preset-default": "^10.10.0"
 	},

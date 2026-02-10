@@ -1,5 +1,5 @@
 import jss from "jss";
-import lm  from "lm";
+import lm  from "@memori-dev/lm";
 import core  from "../coreStyle.js";
 import toast from "../toast.js";
 
@@ -14,13 +14,6 @@ const classes = jss.createStyleSheet({
 		padding: core.twoch,
 	},
 
-	inputText: {
-		background: "none",
-		border: "none",
-		borderBottom: "#fff solid 0.25ch",
-		color: core.palette.white,
-		fontSize: core.twoch,
-	},
 }).attach().classes;
 
 const fadeSpeed = 750;
@@ -33,13 +26,13 @@ const center = lm.appendNew(container, "div", [core.classes.centerAbs], {});
 const form = lm.appendNew(center, "form", [classes.form], { method: "POST" });
 const heading = lm.appendNew(form, "h1", [core.classes.divHeading], {})
 // TODO replace with appendInput
-const name = lm.appendNew(form, "input", [classes.inputText], {
+const name = lm.appendNew(form, "input", [core.classes.inputText], {
 	type: "text",
 	name: "name",
 	placeholder: "name"
 });
 // TODO button to show password
-const pass = lm.appendNew(form, "input", [classes.inputText], {
+const pass = lm.appendNew(form, "input", [core.classes.inputText], {
 	type: "password",
 	name: "pass",
 	placeholder: "password"
@@ -118,5 +111,5 @@ export default {
 	hide: function() {
 		document.body.removeEventListener("keydown", keydownHandler);
 		core.fadeOut(container, fadeSpeed);
-	}
+	},
 };

@@ -17,7 +17,6 @@ const createTable = "create table if not exists " ++ tableName ++ " (" ++
 	\\
 	// TODO test
 	\\    PRIMARY KEY(fsId, userId)
-	\\    UNIQUE(fsId, userId)
 	\\)
 ;
 

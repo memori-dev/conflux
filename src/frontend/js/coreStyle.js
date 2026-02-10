@@ -1,6 +1,9 @@
+import lm  from "@memori-dev/lm";
 import jss from 'jss'
 import preset from 'jss-preset-default'
 jss.setup(preset());
+
+// TODO fonts
 
 const palette = {
 	white:      "#EAEAEA",
@@ -45,6 +48,14 @@ const classes = jss.createStyleSheet({
 		transform: "translate(-50%, -50%)",
 	},
 
+	inputText: {
+		background: "none",
+		border: "none",
+		borderBottom: "#fff solid 0.25ch",
+		color: palette.white,
+		fontSize: twoch,
+	},
+
 	solidBtn: {
 		background: palette.darkPurple,
 		border: "none",
@@ -52,7 +63,7 @@ const classes = jss.createStyleSheet({
 
 		color: palette.white,
 		fontSize: "1.75ch",
-		padding: ".5ch",
+		padding: ".5ch 2ch",
 
 		cursor: "pointer",
 	},
@@ -66,7 +77,7 @@ const classes = jss.createStyleSheet({
 		position: "absolute",
 		width: "100%",
 		height: "100%",
-		background: "rgb(0 0 0 / 25%)",
+		background: "rgb(0 0 0 / 80%)",
 	},
 }).attach().classes;
 
@@ -74,6 +85,25 @@ const FadeState = Object.freeze({
 	in:  Symbol("in"),
 	out: Symbol("out"),
 });
+
+// TODO this needs cleaning up
+// https://css-tricks.com/transitioning-to-auto-height/
+// `height: auto` does not transition on firefox
+const transitionHeight = lm.new("style", [], {});
+transitionHeight.textContent = `.transitionHeight {
+	display: block;
+	overflow: hidden;
+	height: 0;
+
+	transition: height 750ms ease-in-out;
+	transition-behavior: allow-discrete;
+
+	@starting-style {
+		height: 0;
+	}
+}`
+document.head.appendChild(transitionHeight);
+classes.transitionHeight = "transitionHeight";
 
 export default {
 	palette: palette,
@@ -92,6 +122,8 @@ export default {
 		if (this.isHidden(e)) e.classList.remove(classes.hidden);
 	},
 
+	// TODO function to invert classes.hidden
+
 	fadeIn: function(e, ms) {
 		e.style.transition = `opacity ${ms}ms`;
 		e.fadeState = FadeState.in;
@@ -101,7 +133,6 @@ export default {
 		document.body.offsetHeight;
 		e.style.opacity = "1";
 	},
-
 	fadeOut: function(e, ms) {
 		e.style.transition = `opacity ${ms}ms`;
 		e.fadeState = FadeState.out;
@@ -110,5 +141,21 @@ export default {
 		window.setTimeout(function() {
 			if (e.fadeState === FadeState.out) e.style.display = "none";
 		}, ms);
+	},
+
+	isCollapsed: function(e) {
+		return e.style.height === "";
+	},
+
+	collapse: function(e) {
+		e.style.height = "";
+	},
+
+	expand: function(e, height) {
+		e.style.height = height;
+	},
+
+	transitionHeight(e, height) {
+		e.style.height = this.isCollapsed(e) ? height : "";
 	},
 }

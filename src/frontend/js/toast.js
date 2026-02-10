@@ -1,4 +1,4 @@
-import lm from "lm";
+import lm  from "@memori-dev/lm";
 import jss from "jss";
 import core from "./coreStyle.js";
 
