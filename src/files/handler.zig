@@ -2,10 +2,13 @@ const std    = @import("std");
 const json   = @import("json");
 const zap    = @import("zap");
 const sqlite = @import("sqlite");
-const files        = @import("./model.zig");
-const Disk         = @import("../disk/disk.zig").Disk;
-const fileSegments = @import("../fileSegments/model.zig");
-const util         = @import("../util.zig");
+const model          = @import("./model.zig");
+const Authentication = @import("../auth.zig");
+const Disk           = @import("../disk/disk.zig").Disk;
+const fileSegments   = @import("../fileSegments/model.zig");
+const fileStore      = @import("../fileStore/model.zig");
+const util           = @import("../util.zig");
+const users          = @import("../users/model.zig");
 
 const Self = @This();
 pub const Path = "/files";
@@ -16,12 +19,65 @@ error_strategy: zap.Endpoint.ErrorStrategy = .log_to_response,
 alloc: std.mem.Allocator,
 io: std.Io,
 disk: Disk,
+auth: Authentication,
 db: *sqlite.Db,
-filesTable: *files.Table,
+filesTable: *model.Table,
+fileStoreTable: *fileStore.Table,
 fileSegmentsTable: *fileSegments.Table,
 
+// TODO actions enum CRUD
+// TODO fileStorePerms which will be passed in as ?fileStorePerms.Row
+fn canPerformActionOnFileStore(userId: users.Id, fileStoreOwnerId: users.Id) bool {
+	return userId == fileStoreOwnerId;
+}
+
+fn deinitRows(alloc: std.mem.Allocator, rows: []model.Row) void {
+	for (rows) |*v| v.deinit(alloc);
+	alloc.free(rows);
+}
+
+// TODO filtering
+// TODO sorting
+// TODO pagination
+// ?fileStoreId={d}
+pub fn get(self: *Self, req: zap.Request) !void {
+	// parse query params
+	const fileStoreIdStr = req.getParamSlice("fileStoreId") orelse
+		return util.sendBody(req, .bad_request, "missing fileStoreId in query params");
+	const fileStoreId = std.fmt.parseInt(fileStore.Id, fileStoreIdStr, 10) catch
+		return util.sendBody(req, .bad_request, "invalid fileStoreId query param");
+
+	// get user id
+	const userId = self.auth.getId(self.alloc, self.io, req) catch
+		return util.sendBody(req, .unauthorized, "not logged in");
+
+	// get fileStore owner
+	const fileStoreOwnerIdOpt = self.fileStoreTable.selectOwnerById(fileStoreId) catch
+		return util.sendBody(req, .internal_server_error, "failed to select fileStore owner");
+	const fileStoreOwnerId = fileStoreOwnerIdOpt orelse
+		return util.sendBody(req, .not_found, "no fileStore was found for the given fileStore id");
+	
+	// check authorization
+	// TODO filePerms
+	// TODO pass in .select action
+	if (!canPerformActionOnFileStore(userId, fileStoreOwnerId))
+		return util.sendBody(req, .unauthorized, "you do not have permissions for this fileStore");
+
+	// select files
+	const rows = self.filesTable.selectRowsByFileStoreId(self.alloc, fileStoreId) catch
+		return util.sendBody(req, .internal_server_error, "failed to select files");
+	defer deinitRows(self.alloc, rows);
+
+	// marshal
+	const resBody = util.payloadToJson(self.alloc, rows) catch
+		return util.sendBody(req, .internal_server_error, "failed to marshal files");
+	defer self.alloc.free(resBody);
+
+	return util.sendJson(req, .ok, resBody);
+}
+
 pub const Body = struct {
-	upload: files.Insert,
+	upload: model.Insert,
 	segmentHashes: [][44]u8,
 
 	pub fn deinit(self: *Body, alloc: std.mem.Allocator) void {
@@ -30,7 +86,7 @@ pub const Body = struct {
 	}
 };
 
-// TODO cookies & access handling
+// TODO query param for upload methods (segmented, complete, browser or will complete work?)
 pub fn post(self: *Self, req: zap.Request) !void {
 	// parse body
 	const body = req.body
@@ -40,6 +96,22 @@ pub fn post(self: *Self, req: zap.Request) !void {
 	var data = json.parse(Body, self.alloc, &reader)
 		catch return util.sendBody(req, .bad_request, "failed parsing body");
 	defer data.deinit(self.alloc);
+
+	// get user id
+	const userId = self.auth.getId(self.alloc, self.io, req) catch
+		return util.sendBody(req, .unauthorized, "not logged in");
+
+	// get fileStore owner
+	const fileStoreOwnerIdOpt = self.fileStoreTable.selectOwnerById(data.upload.fsId) catch
+		return util.sendBody(req, .internal_server_error, "failed to select fileStore owner");
+	const fileStoreOwnerId = fileStoreOwnerIdOpt orelse
+		return util.sendBody(req, .not_found, "no fileStore was found for the given fileStore id");
+
+	// check authorization
+	// TODO filePerms
+	// TODO pass in .insert action
+	if (!canPerformActionOnFileStore(userId, fileStoreOwnerId))
+		return util.sendBody(req, .unauthorized, "you do not have permissions for this fileStore");
 
 	// transactions
 	var tx = try self.db.savepoint(Path);
@@ -62,7 +134,7 @@ pub fn post(self: *Self, req: zap.Request) !void {
 
 	tx.commit();
 
-	// sends id
+	// send id
 	var buf: [10]u8 = undefined;
 	return util.sendBody(req, .ok, std.fmt.bufPrint(&buf, "{d}", .{id}) catch unreachable);
 }
@@ -77,7 +149,7 @@ pub fn postReq(alloc: std.mem.Allocator, cli: *std.http.Client, payload: Body) !
 	return std.fmt.parseInt(u64, out, 10);
 }
 
-// TODO browser uploads
+// TODO browser uploads, handle by merging into post w a query param for upload method
 // TODO get the timestamp of file creation https://stackoverflow.com/questions/998098/getting-the-original-files-create-date-upon-upload
 // TODO
 //// const filename = f.filename orelse "unknown";

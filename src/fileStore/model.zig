@@ -17,7 +17,7 @@ const createTable = "create table if not exists " ++ tableName ++ " (" ++ \\
 	\\)
 ;
 
-const Id = u32;
+pub const Id = u32;
 
 pub const Row = struct {
 	const Self = @This();
@@ -51,14 +51,18 @@ pub const Table = struct {
 		return id;
 	}
 
-	pub fn select(self: *Self, id: Id) !?Row {
-		return self.db.one(Row, "SELECT * FROM " ++ tableName ++ " WHERE id = (?1) LIMIT 1", .{}, .{id});
+	pub fn selectRowById(self: *Self, alloc: std.mem.Allocator, id: Id) !?Row {
+		return self.db.oneAlloc(Row, alloc, "SELECT * FROM " ++ tableName ++ " WHERE id = (?1)", .{}, .{id});
 	}
 
-	pub fn selectOwner(self: *Self, alloc: std.mem.Allocator, owner: users.Id) ![]Row {
+	pub fn selectRowsByOwner(self: *Self, alloc: std.mem.Allocator, owner: users.Id) ![]Row {
 		var stmt = try self.db.prepare("SELECT * FROM " ++ tableName ++ " WHERE owner = (?1)");
 		defer stmt.deinit();
 		return stmt.all(Row, alloc, .{}, .{owner});
+	}
+
+	pub fn selectOwnerById(self: *Self, id: Id) !?users.Id {
+		return self.db.one(users.Id, "SELECT owner FROM " ++ tableName ++ " WHERE id = (?1)", .{}, .{id});
 	}
 
 	pub fn delete(self: *Self, id: Id) !void {

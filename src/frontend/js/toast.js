@@ -3,7 +3,7 @@ import jss from "jss";
 import core from "./coreStyle.js";
 
 const classes = jss.createStyleSheet({
-	container: {
+	toastContainer: {
 		position: "absolute",
 		top: core.twoch,
 		right: core.twoch,
@@ -38,7 +38,7 @@ const classes = jss.createStyleSheet({
 
 let fadeSpeed = 250;
 let ttl = 5000;
-const container = lm.appendNew(document.body, "div", [classes.container], {});
+const container = lm.appendNew(document.body, "div", [classes.toastContainer], {});
 
 export default {
 	new: function(heading, msg, color) {

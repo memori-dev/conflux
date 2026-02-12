@@ -93,6 +93,7 @@ export default {
 		this.heading.innerText = endpoint;
 		this.form.action = endpoint;
 
+		submit.disabled = false;
 		core.fadeIn(container, fadeSpeed);
 		document.body.addEventListener("keydown", keydownHandler);
 

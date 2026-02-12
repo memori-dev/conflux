@@ -55,10 +55,10 @@ const classes = jss.createStyleSheet({
 	table: {
 		color: core.palette.white,
 		background: "rgb(255 255 255 / 10%)",
-
-		// TODO overflow y scroll & max height
+		overflowY: "scroll",
 	},
 
+	// TODO make non global
 	"@global": {
 		td: {
 			padding: "0.5ch 1ch",
@@ -102,9 +102,8 @@ function fileStoreTable(id, name) {
 		if (!core.isCollapsed(table)) {
 			angleSvg.classList.remove(classes.angleBracketRotate);
 			// TODO clean up transition OR include a footer to avoid the transition entirely
-			// TODO this will break if clicked multiple times (needs state like in coreStyle fade)
 			window.setTimeout(function() {
-				heading.classList.add(classes.fullRadius);
+				if (core.isCollapsed(table)) heading.classList.add(classes.fullRadius);
 			}, 750)
 		}
 		else {
@@ -113,7 +112,6 @@ function fileStoreTable(id, name) {
 		}
 
 		// TODO needs calculation w row height * max rows allowed
-		// TODO also max-height, so use min?
 		core.transitionHeight(table, "4ch");
 	})
 

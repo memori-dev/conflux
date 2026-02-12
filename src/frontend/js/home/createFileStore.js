@@ -27,21 +27,6 @@ const submit = lm.appendNew(center, "input", [core.classes.solidBtn], {
 	value: "submit"
 });
 
-submit.addEventListener("click", async function() {
-	submit.disabled = true;
-	const res = await fetch(`/fileStore?${name.name}=${name.value}`, { method: "POST" });
-
-	if (res.ok) {
-		toast.success("created fileStore");
-		// hide modal
-		// TODO add new filestore in the page
-	}
-	else {
-		// TODO better error handling
-		toast.error(`failed: ${res.statusText.toLowerCase()}`);
-	}
-});
-
 const fadeSpeed = 750;
 
 // hide form on esc and submit on enter
@@ -54,18 +39,40 @@ function keydownHandler(e) {
 function showModal(z) {
 	modal.style["z-index"] = z;
 	
+	submit.disabled = false;
 	core.fadeIn(modal, fadeSpeed);
 	document.body.addEventListener("keydown", keydownHandler);
 	name.focus();
 }
 
 function hideModal() {
+	submit.disabled = true;
 	document.body.removeEventListener("keydown", keydownHandler);
 	core.fadeOut(modal, fadeSpeed);
 }
 
-export default function(z) {
+// newTableHandler(id, name) is called when a new fileStore is successfully created
+export default function(z, newTableHandler) {
 	btn.addEventListener("click", function() { showModal(z) });
+
+	// TODO name validation
+	submit.addEventListener("click", async function() {
+		submit.disabled = true;
+		const res = await fetch(`/fileStore`, {
+			method: "POST",
+			body: name.value,
+		});
+
+		if (res.ok) {
+			toast.success("created fileStore");
+			hideModal();
+			newTableHandler(await res.text(), name.value);
+		}
+		else {
+			// TODO better error handling
+			toast.error(`failed: ${res.statusText.toLowerCase()}`);
+		}
+	});
 
 	return {
 		btn: btn,

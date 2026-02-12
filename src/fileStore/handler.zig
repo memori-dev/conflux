@@ -22,6 +22,26 @@ io: std.Io,
 fileStoreTable: *model.Table,
 auth: Authentication,
 
+// TODO filtering
+// TODO fileStorePerms to load others with access
+pub fn get(self: *Self, req: zap.Request) !void {
+	// get user id
+	const userId = self.auth.getId(self.alloc, self.io, req)
+		catch return util.sendBody(req, .unauthorized, "not logged in");
+
+	// select
+	const fileStores = self.fileStoreTable.selectRowsByOwner(self.alloc, userId)
+		catch return util.sendBody(req, .internal_server_error, "failed to select in fileStore table");
+	defer deinitRows(self.alloc, fileStores);
+
+	// stringify
+	const payload = util.payloadToJson(self.alloc, fileStores)
+		catch return util.sendBody(req, .internal_server_error, "failed to marshal fileStores");
+	defer self.alloc.free(payload);
+
+	return util.sendJson(req, .ok, payload);
+}
+
 pub fn post(self: *Self, req: zap.Request) !void {
 	// parse name
 	const name = req.body
@@ -37,54 +57,4 @@ pub fn post(self: *Self, req: zap.Request) !void {
 
 	var buf: [10]u8 = undefined;
 	return util.sendBody(req, .ok, std.fmt.bufPrint(&buf, "{d}", .{id}) catch unreachable);
-}
-
-// TODO filtering
-pub fn get(self: *Self, req: zap.Request) !void {
-	// get user id
-	const userId = self.auth.getId(self.alloc, self.io, req)
-		catch return util.sendBody(req, .unauthorized, "not logged in");
-
-	// select
-	const fileStores = self.fileStoreTable.selectOwner(self.alloc, userId)
-		catch return util.sendBody(req, .internal_server_error, "failed to select in fileStore table");
-	defer deinitRows(self.alloc, fileStores);
-
-	// stringify
-	const payload = util.payloadToJson(self.alloc, fileStores)
-		catch return util.sendBody(req, .internal_server_error, "failed to marshal fileStores");
-	defer self.alloc.free(payload);
-
-	return util.sendJson(req, .ok, payload);
-}
-
-pub fn postReq(cli: *std.http.Client, name: []const u8, cookie: []const u8) !model.Id {
-	// TODO config based endpoint/port
-	// TODO mustUri(comptime path, comptime additionalLen) w known len for formatting, and std.uri.parse catch unreachable
-	const uriFmt = "http://localhost:8080" ++ Path ++ "?name={s}";
-	var buf: [uriFmt+model.maxNameLen]u8 = undefined;
-	const uri = std.fmt.bufPrint(&buf, uriFmt, .{name}) catch unreachable;
-
-	var req = try cli.request(.POST, std.Uri.parse(uri) catch unreachable, .{
-		.headers = .{
-			.accept_encoding = .{.override = "br"},
-		},
-		.extra_headers = &.{
-			.{.name = "Cookie", .value = cookie},
-		},
-	});
-	defer req.deinit();
-
-	try req.sendBodiless();
-	var response = try req.receiveHead(&.{});
-
-	util.dumpHeaders(response.head);
-	util.dumpHead(response.head);
-
-	// TODO handle status / errors
-	return switch (response.head.status) {
-		// TODO .ok => try std.fmt.parseInt(),
-		.ok => 1,
-		else => error.UploadFailed,
-	};
 }

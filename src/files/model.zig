@@ -1,7 +1,8 @@
 const std    = @import("std");
 const sqlite = @import("sqlite");
-const path = @import("../disk/path.zig");
-const util = @import("../util.zig");
+const path      = @import("../disk/path.zig");
+const fileStore = @import("../fileStore/model.zig");
+const util      = @import("../util.zig");
 
 pub const tableName = "files";
 
@@ -30,7 +31,7 @@ pub const Id = path.uPath;
 pub const Insert = struct {
 	const Self = @This();
 
-	fsId:    u32,
+	fsId:    fileStore.Id,
 	parent: ?Id,
 
 	name:     []const u8,
@@ -44,8 +45,10 @@ pub const Insert = struct {
 };
 
 pub const Row = struct {
+	const Self = @This();
+
 	id:      Id,
-	fsId:    u32,
+	fsId:    fileStore.Id,
 	parent: ?Id,
 	ts:      u64,
 
@@ -55,6 +58,10 @@ pub const Row = struct {
 	blake3:   [44]u8,
 	complete: bool,
 	trash:    bool,
+
+	pub fn deinit(self: *Self, alloc: std.mem.Allocator) void {
+		alloc.free(self.name);
+	}
 };
 
 pub const Table = struct {
@@ -78,8 +85,14 @@ pub const Table = struct {
 		return id;
 	}
 
-	pub fn select(self: *Self, id: Id) !?Row {
-		return self.db.one(Row, "SELECT * FROM " ++ tableName ++ " WHERE id = (?1) LIMIT 1", .{}, .{id});
+	pub fn selectRowById(self: *Self, alloc: std.mem.Allocator, id: Id) !?Row {
+		return self.db.oneAlloc(Row, alloc, "SELECT * FROM " ++ tableName ++ " WHERE id = (?1)", .{}, .{id});
+	}
+
+	pub fn selectRowsByFileStoreId(self: *Self, alloc: std.mem.Allocator, fsId: fileStore.Id) ![]Row {
+		var stmt = try self.db.prepare("SELECT * FROM " ++ tableName ++ " WHERE fsId = (?1)");
+		defer stmt.deinit();
+		return stmt.all(Row, alloc, .{}, .{fsId});
 	}
 
 	pub fn updateComplete(self: *Self, id: Id) !void {

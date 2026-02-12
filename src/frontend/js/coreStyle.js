@@ -75,16 +75,11 @@ const classes = jss.createStyleSheet({
 
 	dimmer: {
 		position: "absolute",
-		width: "100%",
-		height: "100%",
+		width: "100vw",
+		height: "100vh",
 		background: "rgb(0 0 0 / 80%)",
 	},
 }).attach().classes;
-
-const FadeState = Object.freeze({
-	in:  Symbol("in"),
-	out: Symbol("out"),
-});
 
 // TODO this needs cleaning up
 // https://css-tricks.com/transitioning-to-auto-height/
@@ -126,20 +121,21 @@ export default {
 
 	fadeIn: function(e, ms) {
 		e.style.transition = `opacity ${ms}ms`;
-		e.fadeState = FadeState.in;
 
 		// https://stackoverflow.com/a/64001548
 		e.style.display = "block";
 		document.body.offsetHeight;
-		e.style.opacity = "1";
+		e.style.opacity = 1;
 	},
 	fadeOut: function(e, ms) {
 		e.style.transition = `opacity ${ms}ms`;
-		e.fadeState = FadeState.out;
 
 		e.style.opacity = 0;
+		
+		const closuredNow = performance.now();
+		e.lastFadeOutCalled = closuredNow;
 		window.setTimeout(function() {
-			if (e.fadeState === FadeState.out) e.style.display = "none";
+			if (e.style.opacity === "0" && e.lastFadeOutCalled === closuredNow) e.style.display = "none";
 		}, ms);
 	},
 

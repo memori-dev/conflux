@@ -18,12 +18,11 @@ pub fn build(b: *std.Build) void {
 	exe_mod.addImport("auth",   b.dependency("auth",   tarOpt).module("auth"));
 	exe_mod.addImport("json",   b.dependency("json",   tarOpt).module("json"));
 	exe_mod.addImport("sqlite", b.dependency("sqlite", tarOpt).module("sqlite"));
-	const zap = b.dependency("zap", .{
+	exe_mod.addImport("zap", b.dependency("zap", .{
 		.target = target,
 		.optimize = optimize,
 		.openssl = false, // set to true for TLS support
-	});
-	exe_mod.addImport("zap", zap.module("zap"));
+	}).module("zap"));
 
 	const exe = b.addExecutable(.{
 		.name = "conflux",

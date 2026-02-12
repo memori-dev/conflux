@@ -21,7 +21,7 @@ pub const NamePass = struct {
 
 pub const Signup = struct {
 	const Self = @This();
-	const Path = "/signup";
+	pub const Path = "/signup";
 
 	path: []const u8 = Self.Path,
 	error_strategy: zap.Endpoint.ErrorStrategy = .log_to_response,
@@ -56,27 +56,11 @@ pub const Signup = struct {
 		// TODO redirect?
 		req.setStatus(.ok);
 	}
-
-	pub fn postReq(alloc: std.mem.Allocator, cli: *std.http.Client, namePass: NamePass) ![]const u8 {
-		const body = try util.payloadToJson(alloc, namePass);
-		defer alloc.free(body);
-
-		var req = try cli.request(.POST, std.Uri.parse(config.baseUrl ++ Self.Path) catch unreachable, .{
-			.headers = .{.accept_encoding = .{.override = "gzip, deflate, br, zstd"}},
-			.extra_headers = &.{.{.name = "Content-Type", .value = "application/json"}},
-		});
-		defer req.deinit();
-
-		try req.sendBodyComplete(body);
-		var res = try req.receiveHead(&.{});
-
-		return util.getSetCookie(alloc, res.head);
-	}
 };
 
 pub const Login = struct {
 	const Self = @This();
-	const Path = "/login";
+	pub const Path = "/login";
 
 	path: []const u8 = Self.Path,
 	error_strategy: zap.Endpoint.ErrorStrategy = .log_to_response,
@@ -112,29 +96,12 @@ pub const Login = struct {
 		// TODO redirect?
 		req.setStatus(.ok);
 	}
-
-	// TODO handle status / errors
-	pub fn postReq(alloc: std.mem.Allocator, cli: *std.http.Client, namePass: NamePass) ![]const u8 {
-		const body = try util.payloadToJson(alloc, namePass);
-		defer alloc.free(body);
-
-		var req = try cli.request(.POST, std.Uri.parse(config.baseUrl ++ Self.Path) catch unreachable, .{
-			.headers = .{.accept_encoding = .{.override = "br"}},
-			.extra_headers = &.{.{.name = "Content-Type", .value = "application/json"}},
-		});
-		defer req.deinit();
-
-		try req.sendBodyComplete(body);
-		var res = try req.receiveHead(&.{});
-
-		return util.getSetCookie(alloc, res.head);
-	}
 };
 
 // TODO caching
 pub const Users = struct {
 	const Self = @This();
-	const Path = "/usernames";
+	pub const Path = "/usernames";
 
 	path: []const u8 = Self.Path,
 	error_strategy: zap.Endpoint.ErrorStrategy = .log_to_response,
@@ -180,13 +147,13 @@ test {
 
 	// test signup
 	{
-		const cookie = try Signup.postReq(alloc, &setup.cli, .{.name = "a", .pass = "b"});
-		alloc.free(cookie);
+		//const cookie = try Signup.postReq(alloc, &setup.cli, .{.name = "a", .pass = "b"});
+		//alloc.free(cookie);
 	}
 
 	// test login
 	{
-		const cookie = try Login.postReq(alloc, &setup.cli, .{.name = "a", .pass = "b"});
-		alloc.free(cookie);
+		//const cookie = try Login.postReq(alloc, &setup.cli, .{.name = "a", .pass = "b"});
+		//alloc.free(cookie);
 	}
 }

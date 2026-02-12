@@ -1,4 +1,5 @@
 const std    = @import("std");
+const json   = @import("json");
 const sqlite = @import("sqlite");
 const zap    = @import("zap");
 const Authentication = @import("./auth.zig");
@@ -48,7 +49,6 @@ pub fn postPayload(comptime path: []const u8, alloc: std.mem.Allocator, cli: *st
 	defer alloc.free(body);
 
 	var req = try cli.request(.POST, std.Uri.parse(config.host ++ path) catch unreachable, .{
-		.headers = .{.accept_encoding = .{.override = "gzip, deflate, br, zstd"}},
 		.extra_headers = &.{.{.name = "Content-Type", .value = "application/json"}},
 	});
 	defer req.deinit();
@@ -65,6 +65,13 @@ pub fn readResponseBody(comptime len: usize, res: *std.http.Client.Response, buf
 	try reader.readSliceAll(buf[0..toRead]);
 
 	return buf[0..toRead];
+}
+
+pub fn parseJsonResponse(comptime T: type, alloc: std.mem.Allocator, res: *std.http.Client.Response) !T {
+	var buf: [1024]u8 = undefined;
+	const toRead = @min(res.head.content_length orelse 0, buf.len);
+	const rdr = res.reader(buf[0..toRead]);
+	return json.parse(T, alloc, rdr);
 }
 
 //
@@ -98,7 +105,7 @@ pub fn htmlTemplate(comptime jsFileName: []const u8) []const u8 {
 	\\ <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	\\ <title>conflux</title>
 	\\ </head>
-	\\ <body style="background: #0a0a0a; margin: 0">
+	\\ <body style="background: #0a0a0a; margin: 0; font-family: system-ui">
 		++ "<script type=\"module\" src=\"bundle/" ++ jsFileName ++ ".js\"></script>" ++
 	\\ </body>
 	\\ </html>

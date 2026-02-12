@@ -28,7 +28,8 @@ const WelcomeHandler = @import("./welcome/handler.zig");
 // TODO http header for error sets to allow for exhaustive testing/handling
 
 test {
-	std.testing.refAllDecls(@This());
+	//std.testing.refAllDecls(@This());
+	_ = @import("./cli/cli.zig");
 }
 
 fn fallback(r: zap.Request) !void {
@@ -88,7 +89,7 @@ pub fn main() !void {
 	};
 
 	// handlers
-	var filesHandler = FilesHandler {.alloc = alloc, .io = io, .disk = disk, .db = &db, .filesTable = &filesTable, .fileSegmentsTable = &fileSegmentsTable};
+	var filesHandler = FilesHandler {.alloc = alloc, .io = io, .disk = disk, .auth = authentication, .db = &db, .filesTable = &filesTable, .fileStoreTable = &fileStoreTable, .fileSegmentsTable = &fileSegmentsTable};
 	try listener.register(&filesHandler);
 
 	var fileSegmentsHandler = FileSegmentsHandler {.alloc = alloc, .io = io, .disk = disk, .filesTable = &filesTable, .fileSegmentsTable = &fileSegmentsTable};
